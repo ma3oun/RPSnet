@@ -1,16 +1,9 @@
 import os
-
-# import shutil
-
 import torch
-from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
+from utils import Bar, Logger, AverageMeter, accuracy, savefig
 import torch.optim as optim
 import time
-import pickle
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-import pdb
 
 
 class Learner:
