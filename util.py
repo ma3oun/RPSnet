@@ -1,24 +1,24 @@
 import os
 import numpy as np
+import glob
 
 
 def get_best_model(task_search: int, checkpoint: str):
 
-    log_files_a = os.listdir(checkpoint + "/")
+    log_files_a = glob.glob(os.path.join(checkpoint, "session_*.txt"))
     log_files_b = []
 
     for file in log_files_a:
-        file_split = file.split(".")
-        if file_split[-1] == "txt":
-            file_split_2 = file_split[0].split("_")
-            if file_split_2[0] == "session" and file_split_2[1] == str(task_search):
-                log_files_b.append(file)
+        filename = os.path.basename(file)
+        task = filename.split("session_")[1].split("_")[0]
+        if task == str(task_search):
+            log_files_b.append(filename)
 
     best_acc = []
     best_acc_b = []
     for file in log_files_b:
         try:
-            f = np.loadtxt(checkpoint + "/" + file, skiprows=1)
+            f = np.loadtxt(os.path.join(checkpoint, file), skiprows=1)
             best_acc.append(max(f[-1, -1], f[-1, -2]))
             best_acc_b.append(int(file.split("_")[2]))
         except:
@@ -29,23 +29,19 @@ def get_best_model(task_search: int, checkpoint: str):
     return best_acc_b[a]
 
 
-def is_all_done(task_search, q, checkpoint):
-    log_files_a = os.listdir(checkpoint + "/")
+def is_all_done(task_search, nEpochs, checkpoint):
+    log_files_a = glob.glob(os.path.join(checkpoint, "session_*.txt"))
     log_files_b = []
 
     for file in log_files_a:
-        file_split = file.split(".")
-        if file_split[-1] == "txt":
-            file_split_2 = file_split[0].split("_")
-            if file_split_2[0] == "session" and file_split_2[1] == str(task_search):
-                log_files_b.append(file)
+        filename = os.path.basename(file)
+        task = filename.split("session_")[1].split("_")[0]
+        if task == str(task_search):
+            log_files_b.append(filename)
 
-    best_acc = []
-    best_acc_b = []
     for file in log_files_b:
-        f = np.loadtxt(checkpoint + "/" + file, skiprows=1)
-        print(len(f))
-        if len(f) != q:
+        f = np.loadtxt(os.path.join(checkpoint, file), skiprows=1)
+        if len(f) != nEpochs:
             return False
     return True
 
