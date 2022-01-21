@@ -1,9 +1,12 @@
 #!/bin/bash
 
+set -e
+
 export DATASETS_ROOT="/mnt/nas/raid0/workspace/datasets/wip"
 
 for session in {0..4}
 do
+    echo "============== Task: $session =============="
     for testCase in {0..4}
     do
         CUDA_VISIBLE_DEVICES=0 python mnist.py $((2*testCase)) $session &
