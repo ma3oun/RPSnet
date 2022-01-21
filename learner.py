@@ -1,9 +1,10 @@
 import os
 import torch
-from utils import Bar, Logger, AverageMeter, accuracy, savefig
+from utils import Logger, AverageMeter, accuracy, savefig
 import torch.optim as optim
 import time
 import torch.nn as nn
+from tqdm import tqdm
 
 
 class Learner:
@@ -160,77 +161,76 @@ class Learner:
         lossFn = nn.CrossEntropyLoss()
         distillLossFn = nn.KLDivLoss()
 
-        bar = Bar("Processing", max=len(self.trainloader))
-        for batch_idx, (inputs, targets) in enumerate(self.trainloader):
-            # measure data loading time
-            data_time.update(time.time() - end)
+        with tqdm(
+            enumerate(self.trainloader),
+            total=len(self.trainloader),
+            desc="Train: ",
+        ) as bar:
+            for batch_idx, (inputs, targets) in bar:
+                # measure data loading time
+                data_time.update(time.time() - end)
 
-            if self.use_cuda:
-                inputs, targets = (
-                    inputs.cuda(),
-                    targets.cuda(),
-                )
+                if self.use_cuda:
+                    inputs, targets = (
+                        inputs.cuda(),
+                        targets.cuda(),
+                    )
 
-            # compute output
-            outputs = self.model(inputs, path).squeeze()
-            loss = lossFn(outputs, targets)
-            loss_dist = 0
+                # compute output
+                outputs = self.model(inputs, path).squeeze()
+                loss = lossFn(outputs, targets)
+                loss_dist = 0
 
-            ## distillation loss
-            if self.args.sess > 0:
-                outputs_old = self.old_model(inputs, path).squeeze()
+                ## distillation loss
+                if self.args.sess > 0:
+                    outputs_old = self.old_model(inputs, path).squeeze()
 
-                if self.args.sess in range(1 + self.args.jump):
-                    cx = 1
+                    if self.args.sess in range(1 + self.args.jump):
+                        cx = 1
+                    else:
+                        cx = self.args.rigidness_coff * (
+                            self.args.sess - self.args.jump
+                        )
+
+                    loss_dist = cx * distillLossFn(outputs, outputs_old).clamp(min=0.0)
+
+                loss += loss_dist
+
+                # measure accuracy and record loss
+                if self.args.dataset == "MNIST":
+                    prec1, prec5 = accuracy(
+                        output=outputs.data[
+                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
+                        ],
+                        target=targets.cuda().data,
+                        topk=(1, 1),
+                    )
                 else:
-                    cx = self.args.rigidness_coff * (self.args.sess - self.args.jump)
+                    prec1, prec5 = accuracy(
+                        output=outputs.data[
+                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
+                        ],
+                        target=targets.data,
+                        topk=(1, 5),
+                    )
+                losses.update(loss.item(), inputs.size(0))
+                top1.update(prec1.item(), inputs.size(0))
+                top5.update(prec5.item(), inputs.size(0))
 
-                loss_dist = cx * distillLossFn(outputs, outputs_old).clamp(min=0.0)
+                # compute gradient and do SGD step
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
 
-            loss += loss_dist
+                # measure elapsed time
+                batch_time.update(time.time() - end)
+                end = time.time()
 
-            # measure accuracy and record loss
-            if self.args.dataset == "MNIST":
-                prec1, prec5 = accuracy(
-                    output=outputs.data[
-                        :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                    ],
-                    target=targets.cuda().data,
-                    topk=(1, 1),
+                # plot progress
+                bar.set_description(
+                    f"Train: Loss: {losses.avg:.4f} | Dist: {loss_dist:.4f} | top1: {top1.avg: .4f} | top5: {top5.avg: .4f}"
                 )
-            else:
-                prec1, prec5 = accuracy(
-                    output=outputs.data[
-                        :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                    ],
-                    target=targets.data,
-                    topk=(1, 5),
-                )
-            losses.update(loss.item(), inputs.size(0))
-            top1.update(prec1.item(), inputs.size(0))
-            top5.update(prec5.item(), inputs.size(0))
 
-            # compute gradient and do SGD step
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            # plot progress
-            bar.suffix = "({batch}/{size}) | Total: {total:} | Loss: {loss:.4f} | Dist: {loss_dist:.4f} | top1: {top1: .4f} | top5: {top5: .4f} ".format(
-                batch=batch_idx + 1,
-                size=len(self.trainloader),
-                total=bar.elapsed_td,
-                loss=losses.avg,
-                loss_dist=loss_dist,
-                top1=top1.avg,
-                top5=top5.avg,
-            )
-            bar.next()
-        bar.finish()
         self.train_loss, self.train_acc = losses.avg, top1.avg
 
     def test(self, path):
@@ -246,57 +246,55 @@ class Learner:
         self.model.eval()
 
         end = time.time()
-        bar = Bar("Processing", max=len(self.testloader))
-        for batch_idx, (inputs, targets) in enumerate(self.testloader):
-            # measure data loading time
-            data_time.update(time.time() - end)
+        with tqdm(
+            enumerate(self.testloader),
+            total=len(self.testloader),
+            desc="Test: ",
+        ) as bar:
+            for batch_idx, (inputs, targets) in bar:
+                # measure data loading time
+                data_time.update(time.time() - end)
 
-            if self.use_cuda:
-                inputs, targets = (
-                    inputs.cuda(),
-                    targets.cuda(),
+                if self.use_cuda:
+                    inputs, targets = (
+                        inputs.cuda(),
+                        targets.cuda(),
+                    )
+
+                outputs = self.model(inputs, path).squeeze()
+
+                loss = lossFn(outputs, targets)
+
+                # measure accuracy and record loss
+                if self.args.dataset == "MNIST":
+                    prec1, prec5 = accuracy(
+                        outputs.data[
+                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
+                        ],
+                        targets.cuda().data,
+                        topk=(1, 1),
+                    )
+                else:
+                    prec1, prec5 = accuracy(
+                        outputs.data[
+                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
+                        ],
+                        targets.cuda().data,
+                        topk=(1, 5),
+                    )
+
+                losses.update(loss.item(), inputs.size(0))
+                top1.update(prec1.item(), inputs.size(0))
+                top5.update(prec5.item(), inputs.size(0))
+                # measure elapsed time
+                batch_time.update(time.time() - end)
+                end = time.time()
+
+                # plot progress
+                bar.set_description(
+                    f"Test: Loss: {losses.avg:.4f} | top1: {top1.avg: .4f} | top5: {top5.avg: .4f}"
                 )
 
-            outputs = self.model(inputs, path).squeeze()
-
-            loss = lossFn(outputs, targets)
-
-            # measure accuracy and record loss
-            if self.args.dataset == "MNIST":
-                prec1, prec5 = accuracy(
-                    outputs.data[
-                        :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                    ],
-                    targets.cuda().data,
-                    topk=(1, 1),
-                )
-            else:
-                prec1, prec5 = accuracy(
-                    outputs.data[
-                        :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                    ],
-                    targets.cuda().data,
-                    topk=(1, 5),
-                )
-
-            losses.update(loss.item(), inputs.size(0))
-            top1.update(prec1.item(), inputs.size(0))
-            top5.update(prec5.item(), inputs.size(0))
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            # plot progress
-            bar.suffix = "({batch}/{size})  Total: {total:} | Loss: {loss:.4f} | top1: {top1: .4f} | top5: {top5: .4f}".format(
-                batch=batch_idx + 1,
-                size=len(self.testloader),
-                total=bar.elapsed_td,
-                loss=losses.avg,
-                top1=top1.avg,
-                top5=top5.avg,
-            )
-            bar.next()
-        bar.finish()
         self.test_loss = losses.avg
         self.test_acc = top1.avg
 
