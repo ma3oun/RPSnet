@@ -3,7 +3,6 @@ RPS network training on CIFAR100
 Copyright (c) Jathushan Rajasegaran, 2019
 """
 
-from ast import arg
 import os
 import time
 import random
@@ -19,10 +18,9 @@ import sys
 import random
 from torch.utils.data import TensorDataset
 
-from rps_net import RPS_net_mlp, RPS_net_cifar
+from rps_net import RPS_net_mlp
 from learner import Learner
 from util import *
-from cifar_dataset import CIFAR100
 
 
 class args:
@@ -185,7 +183,7 @@ def main():
             path = get_path(args.nLayers, args.M, args.N)
             train_path = np.zeros((args.nLayers, args.M), dtype=bool)
         else:
-            if (current_sess // args.jump) * 2 == 0:  # TODO: remove useless *2 ?
+            if current_sess // args.jump == 0:
                 # This is the first jump
                 fixed_path = np.zeros((args.nLayers, args.M), dtype=bool)
             else:
@@ -252,8 +250,6 @@ def main():
         os.path.join(args.checkpoint, f"fixed_path_{current_sess}_{test_case}.npy"),
         fixed_path,
     )
-
-    # best_model = get_best_model(current_sess, args.checkpoint)
 
     cfmat = main_learner.get_confusion_matrix(infer_path)
     np.save(
