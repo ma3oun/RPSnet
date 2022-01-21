@@ -95,7 +95,7 @@ class Learner:
             )
         if self.args.evaluate:
             print("\nEvaluation only")
-            self.test(self.start_epoch)
+            self.test(self.infer_path)
             print(f" Test Loss: {self.test_loss:.8f}, Test Acc:  {self.test_acc:.2f}")
             return
 
@@ -105,8 +105,9 @@ class Learner:
             print(
                 f"\nEpoch: [{epoch + 1} | {self.args.epochs}] LR: {self.state['lr']} Sess: {self.args.sess}"
             )
-            self.train(epoch, self.infer_path, -1)
-            self.test(epoch, self.infer_path, -1)
+
+            self.train(self.infer_path)
+            self.test(self.infer_path)
 
             # append logger file
             logger.append(
@@ -145,7 +146,7 @@ class Learner:
         print("Best acc:")
         print(self.best_acc)
 
-    def train(self, epoch, path, last):
+    def train(self, path):
         # switch to train mode
         self.model.train()
 
@@ -171,25 +172,19 @@ class Learner:
                 )
 
             # compute output
-            outputs = self.model(inputs, path, -1).squeeze()
+            outputs = self.model(inputs, path).squeeze()
             loss = lossFn(outputs, targets)
             loss_dist = 0
 
             ## distillation loss
             if self.args.sess > 0:
-                outputs_old = self.old_model(inputs, path, -1).squeeze()
+                outputs_old = self.old_model(inputs, path).squeeze()
 
                 if self.args.sess in range(1 + self.args.jump):
                     cx = 1
                 else:
                     cx = self.args.rigidness_coff * (self.args.sess - self.args.jump)
-                # loss_dist = (cx / self.args.train_batch * 1.0) * torch.sum(
-                #    F.kl_div(
-                #        F.log_softmax(outputs / 2.0, dim=1),
-                #        F.softmax(t_one_hot / 2.0, dim=1),
-                #        reduce=False,
-                #    ).clamp(min=0.0)
-                # )
+
                 loss_dist = cx * distillLossFn(outputs, outputs_old).clamp(min=0.0)
 
             loss += loss_dist
@@ -208,7 +203,7 @@ class Learner:
                     output=outputs.data[
                         :, 0 : self.args.class_per_task * (1 + self.args.sess)
                     ],
-                    target=targets.cuda().data,
+                    target=targets.data,
                     topk=(1, 5),
                 )
             losses.update(loss.item(), inputs.size(0))
@@ -228,10 +223,7 @@ class Learner:
             bar.suffix = "({batch}/{size}) | Total: {total:} | Loss: {loss:.4f} | Dist: {loss_dist:.4f} | top1: {top1: .4f} | top5: {top5: .4f} ".format(
                 batch=batch_idx + 1,
                 size=len(self.trainloader),
-                #                         data=data_time.avg,
-                #                         bt=batch_time.avg,
                 total=bar.elapsed_td,
-                #                         eta=bar.eta_td,
                 loss=losses.avg,
                 loss_dist=loss_dist,
                 top1=top1.avg,
@@ -241,8 +233,7 @@ class Learner:
         bar.finish()
         self.train_loss, self.train_acc = losses.avg, top1.avg
 
-    def test(self, epoch, path, last):
-
+    def test(self, path):
         batch_time = AverageMeter()
         data_time = AverageMeter()
         losses = AverageMeter()
@@ -260,22 +251,13 @@ class Learner:
             # measure data loading time
             data_time.update(time.time() - end)
 
-            # targets_one_hot = torch.FloatTensor(inputs.shape[0], self.args.num_class)
-            # targets_one_hot.zero_()
-            # targets_one_hot.scatter_(1, targets[:, None], 1)
-
             if self.use_cuda:
                 inputs, targets = (
                     inputs.cuda(),
                     targets.cuda(),
                 )
-            # inputs, targets_one_hot, targets = (
-            #    torch.autograd.Variable(inputs),
-            #    torch.autograd.Variable(targets_one_hot),
-            #    torch.autograd.Variable(targets),
-            # )
 
-            outputs = self.model(inputs, path, -1).squeeze()
+            outputs = self.model(inputs, path).squeeze()
 
             loss = lossFn(outputs, targets)
 
@@ -308,10 +290,7 @@ class Learner:
             bar.suffix = "({batch}/{size})  Total: {total:} | Loss: {loss:.4f} | top1: {top1: .4f} | top5: {top5: .4f}".format(
                 batch=batch_idx + 1,
                 size=len(self.testloader),
-                #                         data=data_time.avg,
-                #                         bt=batch_time.avg,
                 total=bar.elapsed_td,
-                #                         eta=bar.eta_td,
                 loss=losses.avg,
                 top1=top1.avg,
                 top5=top5.avg,
@@ -330,8 +309,6 @@ class Learner:
         session=0,
         test_case=0,
     ):
-        #         filepath = os.path.join(checkpoint, filename)
-        #         torch.save(state, filepath)
         if is_best:
             torch.save(
                 state,
@@ -339,8 +316,6 @@ class Learner:
                     checkpoint, f"session_{session}_{test_case}_model_best.pth.tar"
                 ),
             )
-
-    #             shutil.copyfile(filepath, os.path.join(checkpoint, 'session_'+str(session)+'_'+str(test_case)+'_model_best.pth.tar') )
 
     def adjust_learning_rate(self, epoch):
         if epoch in self.args.schedule:
@@ -355,7 +330,7 @@ class Learner:
             for i, (inputs, targets) in enumerate(self.testloader):
                 inputs = inputs.cuda()
                 targets = targets.cuda()
-                outputs = self.model(inputs, path, -1)
+                outputs = self.model(inputs, path)
                 _, preds = torch.max(outputs, 1)
                 for t, p in zip(targets.view(-1), preds.view(-1)):
                     confusion_matrix[t.long(), p.long()] += 1
