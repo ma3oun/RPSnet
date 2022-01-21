@@ -4,6 +4,9 @@ set -e
 
 export DATASETS_ROOT="/mnt/nas/raid0/workspace/datasets/wip"
 
+trap 'jobs -p | xargs kill' SIGINT
+trap 'jobs -p | xargs kill' SIGSTOP
+
 for session in {0..9}
 do
     echo "============== Task: $session =============="
