@@ -158,8 +158,8 @@ class Learner:
         top5 = AverageMeter()
         end = time.time()
 
-        lossFn = nn.CrossEntropyLoss()
-        distillLossFn = nn.KLDivLoss()
+        lossFn = nn.CrossEntropyLoss(reduction="batchmean")
+        distillLossFn = nn.KLDivLoss(reduction="batchmean")
 
         with tqdm(
             enumerate(self.trainloader),
