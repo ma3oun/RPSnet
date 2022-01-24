@@ -97,7 +97,7 @@ class args:
     train_batch = 128
     test_batch = 128
     workers = 16
-    resume = False
+    resume = False  # otherwise: indicate path to checkpoint file
     arch = "res-18"
     start_epoch = 0
     evaluate = False

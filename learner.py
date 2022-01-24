@@ -106,7 +106,7 @@ class Learner:
             print(
                 f"\nEpoch: [{epoch + 1} | {self.args.epochs}] LR: {self.state['lr']} Sess: {self.args.sess}"
             )
-
+            # with torch.autograd.set_detect_anomaly(True): # debug only
             self.train(self.infer_path)
             self.test(self.infer_path)
 
@@ -183,10 +183,11 @@ class Learner:
 
                 ## distillation loss
                 if self.args.sess > 0:
-                    outputs_old = self.old_model(inputs, path).squeeze()
+                    with torch.no_grad():
+                        outputs_old = self.old_model(inputs, path).squeeze()
 
                     if self.args.sess in range(1 + self.args.jump):
-                        cx = 1
+                        cx = 1.0
                     else:
                         cx = self.args.rigidness_coff * (
                             self.args.sess - self.args.jump
