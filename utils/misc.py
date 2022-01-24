@@ -23,8 +23,8 @@ def get_mean_and_std(dataset):
     print("==> Computing mean and std..")
     for inputs, targets in dataloader:
         for i in range(3):
-            mean[i] += inputs[:, i, :, :].mean()
-            std[i] += inputs[:, i, :, :].std()
+            mean[i] += inputs[:, i, :, :].batchmean()
+            std[i] += inputs[:, i, :, :].batchstd()
     mean.div_(len(dataset))
     std.div_(len(dataset))
     return mean, std
