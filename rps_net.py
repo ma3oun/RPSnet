@@ -256,12 +256,12 @@ class RPS_net_base(nn.Module):
                             {"params": layer[moduleIdx].parameters()}
                         )
                     else:
-                        layer[layerIdx].requires_grad = False
+                        layer[moduleIdx].requires_grad = False
             trainableParams.append({"params": self.last_layer.parameters()})
         return trainableParams
 
     def __str__(self) -> str:
-        return f"    Total params: {(sum(p.numel() for p in self.parameters()) / 1000000.0):.2f}M"
+        return f"Path Layers: {self.nPathLayers} Total params: {(sum(p.numel() for p in self.parameters()) / 1000000.0):.2f}M"
 
     def __genModules__(
         self, layerListName: str, moduleNameTemplate: str, module: nn.Module
@@ -347,7 +347,7 @@ class RPS_net_cifar(RPS_net_base):
             nn.Sequential(
                 nn.Conv2d(3, a1, kernel_size=3, stride=1, padding=1),
                 nn.BatchNorm2d(a1),
-                nn.ReLU(),
+                # nn.ReLU(),
             ),
         )
 
@@ -476,6 +476,18 @@ class RPS_net_cifar(RPS_net_base):
         )
 
         self.last_layer = nn.Linear(a5, 100)
+
+        self.pathLayers = [
+            self.conv1,
+            self.conv2,
+            self.conv3,
+            self.conv4,
+            self.conv5,
+            self.conv6,
+            self.conv7,
+            self.conv8,
+            self.conv9,
+        ]
 
         self.cuda()
 
