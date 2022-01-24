@@ -158,7 +158,7 @@ class Learner:
         top5 = AverageMeter()
         end = time.time()
 
-        lossFn = nn.CrossEntropyLoss(reduction="batchmean")
+        lossFn = nn.CrossEntropyLoss()
         distillLossFn = nn.KLDivLoss(reduction="batchmean")
 
         with tqdm(
