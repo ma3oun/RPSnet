@@ -41,7 +41,11 @@ def is_all_done(task_search, nEpochs, checkpoint):
 
     for file in log_files_b:
         f = np.loadtxt(os.path.join(checkpoint, file), skiprows=1)
-        if len(f) != nEpochs:
+        if len(f) == 0:
+            raise RuntimeError(
+                f"{file} is empty. Something bad happened! Check logs for previous errors."
+            )
+        elif len(f) != nEpochs:
             return False
     return True
 
