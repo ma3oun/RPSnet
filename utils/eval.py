@@ -1,17 +1,12 @@
-__all__ = ["accuracy"]
+__all__ = ["batch_accuracy"]
 
 
-def accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions for the specified values of k"""
+def batch_accuracy(output, target) -> float:
+    """Batch accuracy in percent"""
 
-    maxk = max(topk)
     batch_size = target.size(0)
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
+    predictedLabel = output.argmax(dim=1, keepdim=True)
+    correct = predictedLabel.eq(target.view_as(predictedLabel)).sum()
+    accuracy = 100.0 * correct / batch_size
 
-    res = []
-    for k in topk:
-        correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-        res.append(correct_k.mul_(100.0 / batch_size))
-    return res
+    return accuracy

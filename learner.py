@@ -1,6 +1,6 @@
 import os
 import torch
-from utils import Logger, AverageMeter, accuracy, savefig
+from utils import Logger, AverageMeter, batch_accuracy, savefig
 import torch.optim as optim
 import time
 import torch.nn as nn
@@ -155,7 +155,6 @@ class Learner:
         data_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
-        top5 = AverageMeter()
         end = time.time()
 
         lossFn = nn.CrossEntropyLoss()
@@ -197,26 +196,13 @@ class Learner:
 
                 loss += loss_dist
 
-                # measure accuracy and record loss
-                if self.args.dataset == "MNIST":
-                    prec1, prec5 = accuracy(
-                        output=outputs.data[
-                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                        ],
-                        target=targets.cuda().data,
-                        topk=(1, 1),
-                    )
-                else:
-                    prec1, prec5 = accuracy(
-                        output=outputs.data[
-                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                        ],
-                        target=targets.data,
-                        topk=(1, 5),
-                    )
-                losses.update(loss.item(), inputs.size(0))
-                top1.update(prec1.item(), inputs.size(0))
-                top5.update(prec5.item(), inputs.size(0))
+                relevantOutputs = outputs.data[
+                    :, 0 : self.args.class_per_task * (1 + self.args.sess)
+                ]
+                accuracy = batch_accuracy(relevantOutputs, targets)
+                batch_size = inputs.size(0)
+                losses.update(loss.item(), batch_size)
+                top1.update(accuracy.item(), batch_size)
 
                 # compute gradient and do SGD step
                 self.optimizer.zero_grad()
@@ -229,7 +215,7 @@ class Learner:
 
                 # plot progress
                 bar.set_description(
-                    f"Train: Loss: {losses.avg:.4f} | Dist: {loss_dist:.4f} | top1: {top1.avg: .4f} | top5: {top5.avg: .4f}"
+                    f"Train: Loss: {losses.avg:.4f} | Dist: {loss_dist:.4f} | Acc: {top1.avg: .4f}"
                 )
 
         self.train_loss, self.train_acc = losses.avg, top1.avg
@@ -239,7 +225,6 @@ class Learner:
         data_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
-        top5 = AverageMeter()
 
         lossFn = nn.CrossEntropyLoss()
 
@@ -266,34 +251,21 @@ class Learner:
 
                 loss = lossFn(outputs, targets)
 
-                # measure accuracy and record loss
-                if self.args.dataset == "MNIST":
-                    prec1, prec5 = accuracy(
-                        outputs.data[
-                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                        ],
-                        targets.cuda().data,
-                        topk=(1, 1),
-                    )
-                else:
-                    prec1, prec5 = accuracy(
-                        outputs.data[
-                            :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                        ],
-                        targets.cuda().data,
-                        topk=(1, 5),
-                    )
+                relevantOutputs = outputs.data[
+                    :, 0 : self.args.class_per_task * (1 + self.args.sess)
+                ]
+                accuracy = batch_accuracy(relevantOutputs, targets)
+                batch_size = inputs.size(0)
+                losses.update(loss.item(), batch_size)
+                top1.update(accuracy.item(), batch_size)
 
-                losses.update(loss.item(), inputs.size(0))
-                top1.update(prec1.item(), inputs.size(0))
-                top5.update(prec5.item(), inputs.size(0))
                 # measure elapsed time
                 batch_time.update(time.time() - end)
                 end = time.time()
 
                 # plot progress
                 bar.set_description(
-                    f"Test: Loss: {losses.avg:.4f} | top1: {top1.avg: .4f} | top5: {top5.avg: .4f}"
+                    f"Test: Loss: {losses.avg:.4f} | Acc: {top1.avg: .4f}"
                 )
 
         self.test_loss = losses.avg

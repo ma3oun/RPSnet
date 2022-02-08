@@ -54,37 +54,46 @@ def load_cifar(
     else:
         # The replay buffer needs to filled
         nElementsPerTask = replayBufferSize // nClsPerTask
-        dataBuffer = []
+        trainDataBuffer = []
+        testDataBuffer = []
         for previousSession in range(currentSession):
-            previousLoader, _ = getDatasets(
+            previousTrainLoader, previousTestLoader = getDatasets(
                 f"cifar100_{previousSession}",
                 1,
                 trainTransforms=trainTransforms,
                 testTransforms=testTransforms,
             )
-            dataBuffer.extend(
-                [(x.squeeze(0), y.squeeze()) for x, y in previousLoader][
+            trainDataBuffer.extend(
+                [(x.squeeze(0), y.squeeze()) for x, y in previousTrainLoader][
                     :nElementsPerTask
                 ]
             )
+            testDataBuffer.extend(
+                [(x.squeeze(0), y.squeeze()) for x, y in previousTestLoader]
+            )
 
-        xTensor = torch.stack([x for x, _ in dataBuffer])
-        yTensor = torch.stack([y for _, y in dataBuffer])
-        extraDataset = TensorDataset(xTensor, yTensor)
+        xTensor = torch.stack([x for x, _ in trainDataBuffer])
+        yTensor = torch.stack([y for _, y in trainDataBuffer])
+        extraTrainingData = TensorDataset(xTensor, yTensor)
+
+        xTensor = torch.stack([x for x, _ in testDataBuffer])
+        yTensor = torch.stack([y for _, y in testDataBuffer])
+        extraTestData = TensorDataset(xTensor, yTensor)
 
         train_loader, test_loader = getDatasets(
             f"cifar100_{currentSession}",
             batchSize,
             trainTransforms=trainTransforms,
             testTransforms=testTransforms,
-            extraTrainingData=extraDataset,
+            extraTrainingData=extraTrainingData,
+            extraTestData=extraTestData,
         )
 
     return train_loader, test_loader
 
 
 class args:
-    epochs = 100
+    epochs = 50
     checkpoint = "results/cifar100/RPS_net_cifar"
     savepoint = ""
     dataset = "cifar-100"
@@ -106,7 +115,7 @@ class args:
     schedule = [20, 40, 60, 80]
     gamma = 0.5
     rigidness_coff = 2.5
-    jump = 2
+    jump = 1
 
 
 state = {
