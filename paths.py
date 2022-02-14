@@ -3,6 +3,24 @@ import numpy as np
 import glob
 
 
+def is_all_done(task_search, q, checkpoint):
+    log_files_a = os.listdir(checkpoint + "/")
+    log_files_b = []
+
+    for file in log_files_a:
+        file_split = file.split(".")
+        if file_split[-1] == "txt":
+            file_split_2 = file_split[0].split("_")
+            if file_split_2[0] == "session" and file_split_2[1] == str(task_search):
+                log_files_b.append(file)
+
+    for file in log_files_b:
+        f = np.loadtxt(checkpoint + "/" + file, skiprows=1)
+        if len(f) != q:
+            return False
+    return True
+
+
 def get_best_model(task_search: int, checkpoint: str):
 
     log_files_a = glob.glob(os.path.join(checkpoint, "session_*.txt"))
@@ -27,27 +45,6 @@ def get_best_model(task_search: int, checkpoint: str):
     a = np.argmax(best_acc)
     print(best_acc[a], best_acc_b[a])
     return best_acc_b[a]
-
-
-def is_all_done(task_search, nEpochs, checkpoint):
-    log_files_a = glob.glob(os.path.join(checkpoint, "session_*.txt"))
-    log_files_b = []
-
-    for file in log_files_a:
-        filename = os.path.basename(file)
-        task = filename.split("session_")[1].split("_")[0]
-        if task == str(task_search):
-            log_files_b.append(filename)
-
-    for file in log_files_b:
-        f = np.loadtxt(os.path.join(checkpoint, file), skiprows=1)
-        if len(f) == 0:
-            raise RuntimeError(
-                f"{file} is empty. Something bad happened! Check logs for previous errors."
-            )
-        elif len(f) != nEpochs:
-            return False
-    return True
 
 
 def get_path(nLayers: int, M: int, N: int) -> np.array:
@@ -83,7 +80,3 @@ def get_free_path(fixed_path):
             path[c, a[0]] = 1
         c += 1
     return path
-
-
-def flatten_list(a):
-    return np.concatenate(a).ravel()

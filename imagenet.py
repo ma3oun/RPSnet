@@ -35,7 +35,7 @@ import random
 
 from rps_net import RPS_Net
 from learner import Learner
-from util import *
+from paths import *
 from cifar_dataset import CIFAR100
 
 

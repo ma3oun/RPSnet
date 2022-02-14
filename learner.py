@@ -147,6 +147,15 @@ class Learner:
         print("Best acc:")
         print(self.best_acc)
 
+    def extractTaskData(self, outputs, taskIdx: int = None):
+        if taskIdx is None:
+            taskID = self.args.sess
+        else:
+            taskID = taskIdx
+        nClasses = self.args.class_per_task
+
+        return outputs[:, : (taskID + 1) * nClasses]
+
     def train(self, path):
         # switch to train mode
         self.model.train()
@@ -176,14 +185,18 @@ class Learner:
                     )
 
                 # compute output
-                outputs = self.model(inputs, path).squeeze()
-                loss = lossFn(outputs, targets)
+                fullOutputs = self.model(inputs, path).squeeze()
+                outputsXentropy = self.extractTaskData(fullOutputs)
+                outputsDistill = self.extractTaskData(fullOutputs, self.args.sess - 1)
+                loss = lossFn(outputsXentropy, targets)
                 loss_dist = 0
 
                 ## distillation loss
                 if self.args.sess > 0:
                     with torch.no_grad():
-                        outputs_old = self.old_model(inputs, path).squeeze()
+                        outputs_old = self.extractTaskData(
+                            self.old_model(inputs, path).squeeze(), self.args.sess - 1
+                        )
 
                     if self.args.sess in range(1 + self.args.jump):
                         cx = 1.0
@@ -192,14 +205,13 @@ class Learner:
                             self.args.sess - self.args.jump
                         )
 
-                    loss_dist = cx * distillLossFn(outputs, outputs_old).clamp(min=0.0)
+                    loss_dist = cx * distillLossFn(
+                        outputsDistill / 2.0, outputs_old / 2.0
+                    ).clamp(min=0.0)
 
                 loss += loss_dist
 
-                relevantOutputs = outputs.data[
-                    :, 0 : self.args.class_per_task * (1 + self.args.sess)
-                ]
-                accuracy = batch_accuracy(relevantOutputs, targets)
+                accuracy = batch_accuracy(outputsXentropy, targets)
                 batch_size = inputs.size(0)
                 losses.update(loss.item(), batch_size)
                 top1.update(accuracy.item(), batch_size)
@@ -296,15 +308,15 @@ class Learner:
 
     def get_confusion_matrix(self, path):
 
-        confusion_matrix = torch.zeros(100, 100)
+        confusion_matrix = torch.zeros(
+            self.args.num_class, self.args.num_class, dtype=torch.long
+        )
         with torch.no_grad():
-            for i, (inputs, targets) in enumerate(self.testloader):
-                inputs = inputs.cuda()
-                targets = targets.cuda()
-                outputs = self.model(inputs, path)
-                _, preds = torch.max(outputs, 1)
-                for t, p in zip(targets.view(-1), preds.view(-1)):
+            for data, targets in self.testloader:
+                outputs = self.model(data.cuda(), path).squeeze()
+                predictions = outputs.argmax(dim=1)
+                for t, p in zip(targets.cuda().squeeze(), predictions.squeeze()):
                     confusion_matrix[t.long(), p.long()] += 1
 
-        print(confusion_matrix)
+        print(f"Confusion matrix:\n{confusion_matrix}")
         return confusion_matrix
