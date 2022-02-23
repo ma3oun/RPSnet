@@ -12,6 +12,10 @@ class args:
     datasetName = "multi_cifar"
     checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
     savepoint = ""
+    schedule = [20, 40, 60, 80, 100]
+    epochs = 110
+    lr = 0.001
+    class_per_task = 10
     # dataset = "cifar-100"
     M = 8
     nLayers = 9
@@ -29,39 +33,25 @@ class args:
     jump = 2
     memory = 2000
 
-class args_cifar100(args):
-    lr = 0.001
-    schedule = [20, 40, 60, 80]
-    epochs = 100
-    num_class = 100
-    class_per_task = 10
-
-class args_cifar10(args):
-    epochs = 10
-    schedule = [0]
-    num_class = 10
-    class_per_task = 10
-
 if __name__ == "__main__":
     if int(sys.argv[2]) <= 9:
-        current_args = args_cifar100
+        args.num_class = 100
         dataset = cifar100Dataset
     elif int(sys.argv[2]) == 10:
-        current_args = args_cifar10
-        current_args.lr = args_cifar100.lr
+        args.num_class = 10
         dataset = cifar10Dataset
     else:
         raise Exception('Session > 10 not expected')
 
     state = {
         key: value
-        for key, value in current_args.__dict__.items()
+        for key, value in args.__dict__.items()
         if not key.startswith("__") and not callable(key)
     }
     print(state)
-    model = RPS_net_cifar(current_args.M)
+    model = RPS_net_cifar(args.M)
     print(model)
 
     current_sess = int(sys.argv[2])
     test_case = sys.argv[1]
-    main(current_args, model, dataset, test_case, current_sess)
+    main(args, model, dataset, test_case, current_sess)
