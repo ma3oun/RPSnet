@@ -33,7 +33,9 @@ mnistTestTransforms = transforms.Compose(
 
 mnistDataset = Cl_dataset("mnist", 10, 5, mnistTrainTransforms, mnistTestTransforms)
 
-cifar100TrainTransforms = transforms.Compose(
+svhnDataset = Cl_dataset("svhn", 10, 5, mnistTrainTransforms, mnistTestTransforms)
+
+cifarTrainTransforms = transforms.Compose(
     [
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -43,7 +45,7 @@ cifar100TrainTransforms = transforms.Compose(
     ]
 )
 
-cifar100TestTransforms = testTransforms = transforms.Compose(
+cifarTestTransforms = testTransforms = transforms.Compose(
     [
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
@@ -51,5 +53,11 @@ cifar100TestTransforms = testTransforms = transforms.Compose(
 )
 
 cifar100Dataset = Cl_dataset(
-    "cifar100", 100, 10, cifar100TrainTransforms, cifar100TestTransforms
+    "cifar100", 100, 10, cifarTrainTransforms, cifarTestTransforms
 )
+
+
+cifar10Dataset = Cl_dataset(
+    "cifar10", 10, 1, cifarTrainTransforms, cifarTestTransforms
+)
+
