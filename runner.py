@@ -41,7 +41,7 @@ def main(
     args.test_case = test_case
 
     train_loader, test_loader = dataset.getTaskDataloaders(
-        current_sess, args.batchSize, args.memory
+        0 if current_sess == 10 else current_sess, args.batchSize, args.memory # TODO - use cifar10 instead of cifar10_0 in a better way
     )
 
     print(f"Train labels description:\n{labelStats(train_loader,args.num_class)}")

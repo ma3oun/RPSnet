@@ -13,7 +13,7 @@ class args:
     checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
     savepoint = ""
     schedule = [20, 40, 60, 80]
-    epochs = 5
+    epochs = 2
     lr = 0.001
     class_per_task = 10
     # dataset = "cifar-100"
