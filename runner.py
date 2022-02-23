@@ -66,7 +66,6 @@ def main(
             )
 
             path = get_path(args.nLayers, args.M, args.N)
-            train_path = np.zeros((args.nLayers, args.M), dtype=bool)
         else:
             if current_sess // args.jump == 0:
                 # This is the first jump
@@ -86,8 +85,6 @@ def main(
                     args.checkpoint, f"path_{current_sess-1}_{load_test_case}.npy"
                 )
             )
-            train_path = np.zeros((args.nLayers, args.M), dtype=bool)
-        infer_path = np.zeros((args.nLayers, args.M), dtype=bool)
         train_path = ~fixed_path & path
         infer_path = fixed_path | path
 
