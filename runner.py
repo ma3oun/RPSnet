@@ -89,13 +89,10 @@ def main(
         infer_path = fixed_path | path
 
     np.save(os.path.join(args.checkpoint, f"path_{current_sess}_{test_case}.npy"), path)
-    if current_sess == 0:
-        fixed_path_x = path.copy()
-    else:
-        fixed_path_x = ~fixed_path & path
+
     np.save(
         os.path.join(args.checkpoint, f"fixed_path_{current_sess}_{test_case}.npy"),
-        fixed_path_x,
+        train_path,
     )
 
     print(f"Starting with session {current_sess}")
@@ -130,16 +127,6 @@ def main(
         title=args.datasetName,
     )
     main_learner.learn()
-
-    if current_sess == 0:
-        fixed_path = path.copy()
-    else:
-        fixed_path = ~fixed_path & path
-
-    np.save(
-        os.path.join(args.checkpoint, f"fixed_path_{current_sess}_{test_case}.npy"),
-        fixed_path,
-    )
 
     cfmat = main_learner.get_confusion_matrix(infer_path)
     np.save(
