@@ -36,6 +36,7 @@ params.gamma = 0.5
 params.rigidness_coff = 2.5
 params.jump = 2
 params.memory = 2000
+params.with_mlflow = True
 
 
 if __name__ == "__main__":

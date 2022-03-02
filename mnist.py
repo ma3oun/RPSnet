@@ -14,6 +14,7 @@ params = EasyDict()
 
 
 params.datasetName = "mnist"
+params.max_test_case = 8
 params.epochs = 10
 params.checkpoint = "results/mnist/RPS_net_mnist"
 params.savepoint = "results/mnist/pathnet_mnist"
@@ -37,6 +38,7 @@ params.gamma = 0.5
 params.rigidness_coff = 2.5
 params.jump = 1
 params.memory = 4400
+params.with_mlflow = True
 
 
 if __name__ == "__main__":
