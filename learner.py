@@ -6,7 +6,6 @@ import time
 import torch.nn as nn
 from tqdm import tqdm
 
-
 class Learner:
     def __init__(
         self,
@@ -59,6 +58,9 @@ class Learner:
         )
 
     def learn(self):
+        if self.args.with_mlflow:
+            import mlflow
+
         if self.args.resume:
             # Load checkpoint.
             print("==> Resuming from checkpoint..")
@@ -121,6 +123,14 @@ class Learner:
                     self.best_acc,
                 ]
             )
+
+            if self.args.with_mlflow:
+                mlflow.log_metric(f"learning rate_{self.args.sess}_{self.args.test_case}", self.state["lr"], epoch)
+                mlflow.log_metric(f"train_loss_{self.args.sess}_{self.args.test_case}", self.train_loss, epoch)
+                mlflow.log_metric(f"test_loss_{self.args.sess}_{self.args.test_case}", self.test_loss, epoch)
+                mlflow.log_metric(f"train_acc_{self.args.sess}_{self.args.test_case}", self.train_acc, epoch)
+                mlflow.log_metric(f"test_acc_{self.args.sess}_{self.args.test_case}", self.test_acc, epoch)
+                mlflow.log_metric(f"best_acc_{self.args.sess}_{self.args.test_case}", self.best_acc, epoch)
 
             # save model
             is_best = self.test_acc > self.best_acc

@@ -8,6 +8,7 @@ from runner import main
 from rps_net import RPS_net_cifar
 from datasets import cifar100Dataset, cifar10Dataset
 
+
 class args:
     datasetName = "multi_cifar"
     checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
@@ -32,6 +33,8 @@ class args:
     rigidness_coff = 2.5
     jump = 2
     memory = 2000
+    with_mlflow = True
+
 
 if __name__ == "__main__":
     if int(sys.argv[2]) <= 9:

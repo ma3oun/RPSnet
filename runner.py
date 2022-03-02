@@ -14,13 +14,17 @@ import numpy as np
 import copy
 
 from learner import Learner
-from paths import get_best_model, get_path, is_all_done
+from paths import get_best_model, load_path, generate_paths, is_all_done
 from cl_datasets import Cl_dataset, labelStats
 
 
 def main(
     args, model: torch.nn.Module, dataset: Cl_dataset, test_case: int, current_sess: int
 ):
+    if args.with_mlflow:
+        import mlflow
+        mlflow.start_run()
+
     # Use CUDA
     use_cuda = torch.cuda.is_available()
     seed = random.randint(1, 10000)
@@ -31,6 +35,9 @@ def main(
 
     if not os.path.isdir(args.checkpoint):
         mkdir_p(args.checkpoint)
+
+    if not os.path.isdir(args.checkpoint + "/current_paths"):
+        mkdir_p(args.checkpoint + "/current_paths")
 
     if not os.path.isdir(
         f"models/{args.datasetName}/" + args.checkpoint.split("/")[-1]
@@ -65,7 +72,14 @@ def main(
                 )
             )
 
-            path = get_path(args.nLayers, args.M, args.N)
+            if test_case is 0:
+                generate_paths(args.nLayers, args.M, args.N, fixed_path, args.checkpoint)
+
+            path = None
+            while path is None:
+                time.sleep(10)
+                path = load_path(test_case, args.checkpoint)
+
         else:
             if current_sess // args.jump == 0:
                 # This is the first jump
@@ -136,6 +150,17 @@ def main(
         cfmat,
     )
 
+    if args.with_mlflow:
+        mlflow.log_artifact(os.path.join(
+            args.checkpoint, f"confusion_matrix_{current_sess}_{test_case}.npy"
+        ))
+
+    # remove all files in current_paths
+    if current_sess > 0 and current_sess % args.jump is current_sess - 1:
+        dir = args.checkpoint + "/current_paths"
+        for f in os.listdir(dir):
+            os.remove(os.path.join(dir, f))
+
     print(f"done with session {current_sess}")
     print("#" * 80)
     while True:
@@ -143,6 +168,9 @@ def main(
             break
         else:
             time.sleep(10)
+
+    if args.with_mlflow:
+        mlflow.end_run()
 
 
 if __name__ == "__main__":
