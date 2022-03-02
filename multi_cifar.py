@@ -7,54 +7,48 @@ import sys
 from runner import main
 from rps_net import RPS_net_cifar
 from datasets import cifar100Dataset, cifar10Dataset
+from easydict import EasyDict
 
-
-class args:
-    datasetName = "multi_cifar"
-    checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
-    savepoint = ""
-    schedule = [20, 40, 60, 80]
-    epochs = 100
-    lr = 0.001
-    class_per_task = 10
-    # dataset = "cifar-100"
-    M = 8
-    nLayers = 9
-    N = 1
-    batchSize = 128
-    workers = 16
-    resume = False  # otherwise: indicate path to checkpoint file
-    arch = "res-18"
-    start_epoch = 0
-    evaluate = False
-    sess = 0
-    test_case = 0
-    gamma = 0.5
-    rigidness_coff = 2.5
-    jump = 2
-    memory = 2000
-    with_mlflow = True
+params = EasyDict()
+params.datasetName = "multi_cifar"
+params.checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
+params.savepoint = ""
+params.schedule = [20, 40, 60, 80]
+params.epochs = 100
+params.lr = 0.001
+params.class_per_task = 10
+params.M = 8
+params.nLayers = 9
+params.N = 1
+params.batchSize = 128
+params.workers = 16
+params.resume = False  # otherwise: indicate path to checkpoint file
+params.arch = "res-18"
+params.start_epoch = 0
+params.evaluate = False
+params.sess = 0
+params.test_case = 0
+params.gamma = 0.5
+params.rigidness_coff = 2.5
+params.jump = 2
+params.memory = 2000
+params.with_mlflow = True
 
 
 if __name__ == "__main__":
     if int(sys.argv[2]) <= 9:
-        args.num_class = 100
+        params.num_class = 100
         dataset = cifar100Dataset
     elif int(sys.argv[2]) == 10:
-        args.num_class = 10
+        params.num_class = 10
         dataset = cifar10Dataset
     else:
-        raise Exception('Session > 10 not expected')
+        raise Exception("Session > 10 not expected")
 
-    state = {
-        key: value
-        for key, value in args.__dict__.items()
-        if not key.startswith("__") and not callable(key)
-    }
-    print(state)
-    model = RPS_net_cifar(args.M)
+    print(params)
+    model = RPS_net_cifar(params.M)
     print(model)
 
     current_sess = int(sys.argv[2])
     test_case = sys.argv[1]
-    main(args, model, dataset, test_case, current_sess)
+    main(params, model, dataset, test_case, current_sess)
