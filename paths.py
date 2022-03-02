@@ -11,8 +11,7 @@ def is_all_done(task_search, q, checkpoint):
         file_split = file.split(".")
         if file_split[-1] == "txt":
             file_split_2 = file_split[0].split("_")
-            if file_split_2[0] == "session" and file_split_2[1] == str(
-                    task_search):
+            if file_split_2[0] == "session" and file_split_2[1] == str(task_search):
                 log_files_b.append(file)
 
     for file in log_files_b:
@@ -47,10 +46,16 @@ def get_best_model(task_search: int, checkpoint: str):
     return best_acc_b[a]
 
 
-def generate_paths(nLayers: int, M: int, N: int, fixed_path: np.array,
-                   checkpoint: str):
+def generate_paths(
+    nLayers: int,
+    M: int,
+    N: int,
+    fixed_path: np.array,
+    checkpoint: str,
+    max_test_case: int = 8,
+):
     paths = []
-    for test_case in range(8):
+    for test_case in range(max_test_case):
         new_path = get_path(nLayers, M, N)
 
         equivalent = True
@@ -66,15 +71,11 @@ def generate_paths(nLayers: int, M: int, N: int, fixed_path: np.array,
                 paths.append(new_path)
 
     for test_case, path in enumerate(paths):
-        np.save(
-            os.path.join(checkpoint, f"current_paths/path_{test_case}.npy"),
-            path)
+        np.save(os.path.join(checkpoint, f"current_paths/path_{test_case}.npy"), path)
 
 
 def load_path(test_case: int, checkpoint):
-    file_path = os.path.join(
-        checkpoint, f"current_paths/path_{test_case}.npy"
-    )
+    file_path = os.path.join(checkpoint, f"current_paths/path_{test_case}.npy")
 
     if not os.path.isfile(file_path):
         return None
@@ -82,8 +83,7 @@ def load_path(test_case: int, checkpoint):
         return np.load(file_path)
 
 
-def equivalent_path(path1: np.array, path2: np.array,
-                    fixed_path: np.array) -> bool:
+def equivalent_path(path1: np.array, path2: np.array, fixed_path: np.array) -> bool:
     """
     Check if two paths are equivalent.
 

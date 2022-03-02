@@ -23,6 +23,7 @@ def main(
 ):
     if args.with_mlflow:
         import mlflow
+
         mlflow.start_run()
 
     # Use CUDA
@@ -48,7 +49,9 @@ def main(
     args.test_case = test_case
 
     train_loader, test_loader = dataset.getTaskDataloaders(
-        0 if current_sess == 10 else current_sess, args.batchSize, args.memory # TODO - use cifar10 instead of cifar10_0 in a better way
+        0 if current_sess == 10 else current_sess,
+        args.batchSize,
+        args.memory,  # TODO - use cifar10 instead of cifar10_0 in a better way
     )
 
     print(f"Train labels description:\n{labelStats(train_loader,args.num_class)}")
@@ -72,8 +75,15 @@ def main(
                 )
             )
 
-            if test_case is 0:
-                generate_paths(args.nLayers, args.M, args.N, fixed_path, args.checkpoint)
+            if test_case == 0:
+                generate_paths(
+                    args.nLayers,
+                    args.M,
+                    args.N,
+                    fixed_path,
+                    args.checkpoint,
+                    args.max_test_case,
+                )
 
             path = None
             while path is None:
@@ -151,9 +161,11 @@ def main(
     )
 
     if args.with_mlflow:
-        mlflow.log_artifact(os.path.join(
-            args.checkpoint, f"confusion_matrix_{current_sess}_{test_case}.npy"
-        ))
+        mlflow.log_artifact(
+            os.path.join(
+                args.checkpoint, f"confusion_matrix_{current_sess}_{test_case}.npy"
+            )
+        )
 
     # remove all files in current_paths
     if current_sess > 0 and current_sess % args.jump is current_sess - 1:
