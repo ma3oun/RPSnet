@@ -13,6 +13,7 @@ params = EasyDict()
 
 
 params.datasetName = "cifar100"
+params.max_test_case = 8
 params.epochs = 100
 params.checkpoint = "results/cifar100/RPS_net_cifar"
 params.savepoint = ""
