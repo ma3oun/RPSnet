@@ -11,6 +11,7 @@ from easydict import EasyDict
 
 params = EasyDict()
 params.datasetName = "multi_cifar"
+params.max_test_case = 8
 params.checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
 params.savepoint = ""
 params.schedule = [20, 40, 60, 80]
