@@ -75,7 +75,9 @@ def main(
                 )
             )
 
-            if test_case == 0:
+            print(f"test_case : {test_case}")
+            if test_case is 0:
+                print("Generating paths for _{current_sess}_{test_case}")
                 generate_paths(
                     args.nLayers,
                     args.M,
@@ -84,11 +86,14 @@ def main(
                     args.checkpoint,
                     args.max_test_case,
                 )
+                print("Paths generated")
 
             path = None
             while path is None:
                 time.sleep(10)
                 path = load_path(test_case, args.checkpoint)
+                print(f"loading path_{current_sess}_{test_case}")
+            print("path loaded")
 
         else:
             if current_sess // args.jump == 0:
@@ -168,7 +173,7 @@ def main(
         )
 
     # remove all files in current_paths
-    if current_sess > 0 and current_sess % args.jump is current_sess - 1:
+    if current_sess > 0 and current_sess % args.jump is args.jump - 1:
         dir = args.checkpoint + "/current_paths"
         for f in os.listdir(dir):
             os.remove(os.path.join(dir, f))
