@@ -185,6 +185,7 @@ def main(
             break
         else:
             time.sleep(10)
+    print(f"test_case {current_sess}_{test_case} done")
 
     if args.with_mlflow:
         mlflow.end_run()
