@@ -189,6 +189,8 @@ def main(
 
     if args.with_mlflow:
         mlflow.end_run()
+    print(f"2-test_case {current_sess}_{test_case} done")
+
 
 
 if __name__ == "__main__":

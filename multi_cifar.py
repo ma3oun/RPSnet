@@ -15,7 +15,7 @@ params.max_test_case = 8
 params.checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
 params.savepoint = ""
 params.schedule = [20, 40, 60, 80]
-params.epochs = 5
+params.epochs = 3
 params.lr = 0.001
 params.class_per_task = 10
 params.M = 8
@@ -61,3 +61,4 @@ if __name__ == "__main__":
 
     test_case = sys.argv[1]
     main(params, model, dataset, test_case, current_sess)
+    print(f"The end of {current_sess}_{test_case}")
