@@ -15,7 +15,7 @@ params.max_test_case = 8
 params.checkpoint = "results/multi_cifar/RPS_net_multi_cifar"
 params.savepoint = ""
 params.schedule = [20, 40, 60, 80]
-params.epochs = 100
+params.epochs = 10
 params.lr = 0.001
 params.class_per_task = 10
 params.M = 8
@@ -37,19 +37,27 @@ params.with_mlflow = True
 
 
 if __name__ == "__main__":
-    if int(sys.argv[2]) <= 9:
+    print("in")
+    current_sess = int(sys.argv[2])
+
+    print(f"run multi_cifar, session {current_sess}")
+    if current_sess <= 9:
+        print("if")
         params.num_class = 100
         dataset = cifar100Dataset
-    elif int(sys.argv[2]) == 10:
+    elif current_sess == 10:
+        print("elif")
         params.num_class = 10
         dataset = cifar10Dataset
     else:
+        print("else")
         raise Exception("Session > 10 not expected")
 
+    print("out")
     print(params)
     model = RPS_net_cifar(params.M)
     print(model)
 
-    current_sess = int(sys.argv[2])
+
     test_case = sys.argv[1]
     main(params, model, dataset, test_case, current_sess)
