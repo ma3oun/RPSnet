@@ -31,7 +31,7 @@ params.sess = 0
 params.test_case = 0
 params.gamma = 0.5
 params.rigidness_coff = 2.5
-params.jump = 2
+params.jump = 1
 params.memory = 2000
 params.with_mlflow = True
 
