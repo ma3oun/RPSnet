@@ -14,7 +14,7 @@ import numpy as np
 import copy
 
 from learner import Learner
-from paths import get_best_model, load_path, generate_paths, is_all_done
+from paths import get_best_model, load_path, generate_paths, is_all_done, get_path
 from cl_datasets import Cl_dataset, labelStats
 
 
@@ -76,23 +76,25 @@ def main(
             )
 
             print(f"test_case : {test_case}")
-            if test_case == 0:
-                print("Generating paths for _{current_sess}_{test_case}")
-                generate_paths(
-                    args.nLayers,
-                    args.M,
-                    args.N,
-                    fixed_path,
-                    args.checkpoint,
-                    args.max_test_case,
-                )
-                print("Paths generated")
 
-            path = None
-            while path is None:
-                time.sleep(10)
-                path = load_path(test_case, args.checkpoint)
-                print(f"loading path_{current_sess}_{test_case}")
+            path = get_path(args.nLayers, args.M, args.N)
+            # if test_case == 0:
+            #     print("Generating paths for _{current_sess}_{test_case}")
+            #     generate_paths(
+            #         args.nLayers,
+            #         args.M,
+            #         args.N,
+            #         fixed_path,
+            #         args.checkpoint,
+            #         args.max_test_case,
+            #     )
+            #     print("Paths generated")
+            #
+            # path = None
+            # while path is None:
+            #     time.sleep(10)
+            #     path = load_path(test_case, args.checkpoint)
+            #     print(f"loading path_{current_sess}_{test_case}")
             print("path loaded")
 
         else:
