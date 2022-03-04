@@ -75,11 +75,11 @@ def main(
                 )
             )
 
-            print(f"test_case : {test_case}")
+            print(f"test_case is {test_case}")
 
             # path = get_path(args.nLayers, args.M, args.N)
             if test_case == 0:
-                print("Generating paths for _{current_sess}_{test_case}")
+                print(f"Generating paths for _{current_sess}_{test_case}")
                 generate_paths(
                     args.nLayers,
                     args.M,
