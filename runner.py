@@ -75,7 +75,7 @@ def main(
                 )
             )
 
-            print(f"test_case is {test_case}")
+            print(f"test_case is {test_case}, is it " + str(test_case == 0))
 
             # path = get_path(args.nLayers, args.M, args.N)
             if test_case == 0:
@@ -192,7 +192,6 @@ def main(
     if args.with_mlflow:
         mlflow.end_run()
     print(f"2-test_case {current_sess}_{test_case} done")
-
 
 
 if __name__ == "__main__":
