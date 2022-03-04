@@ -98,7 +98,7 @@ def equivalent_path(path1: np.array, path2: np.array, fixed_path: np.array) -> b
 
     * never activated modules are all equivalent, modulo the initialization
     """
-    return fixed_path and path1 is path2
+    return np.array_equal(fixed_path & path1, fixed_path & path2)
 
 
 def get_path(nLayers: int, M: int, N: int) -> np.array:
