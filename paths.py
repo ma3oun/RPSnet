@@ -61,14 +61,16 @@ def generate_paths(
         equivalent = True
         while equivalent:
             equivalent = False
+            print("EQUIVALENT ?")
+            print(paths)
+            print(new_path)
             for path in paths:
                 if equivalent_path(path, new_path, fixed_path):
                     equivalent = True
                     new_path = get_path(nLayers, M, N)
                     break
 
-            if not equivalent:
-                paths.append(new_path)
+        paths.append(new_path)
 
     for test_case, path in enumerate(paths):
         np.save(os.path.join(checkpoint, f"current_paths/path_{test_case}.npy"), path)
