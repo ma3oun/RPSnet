@@ -23,15 +23,7 @@ def main(
     if args.with_mlflow:
         import mlflow
 
-        if current_sess == 0 and test_case == 0:
-            run = mlflow.start_run(run_name="without_duplicate_paths")
-            os.environ["MLFLOW_RUN_ID"] = run.info.run_id
-        else:
-            while True:
-                if "MLFLOW_RUN_ID" in os.environ:
-                    break
-                time.sleep(5)
-            mlflow.start_run(os.environ["MLFLOW_RUN_ID"])
+        mlflow.start_run(run_name=f"without_duplicate_paths_{current_sess}_{test_case}")
 
     # Use CUDA
     use_cuda = torch.cuda.is_available()
@@ -196,6 +188,9 @@ def main(
             break
         else:
             time.sleep(5)
+
+    if args.with_mlflow:
+        mlflow.end_run()
 
 
 if __name__ == "__main__":
