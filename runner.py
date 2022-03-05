@@ -54,8 +54,8 @@ def main(
         args.memory,  # TODO - use cifar10 instead of cifar10_0 in a better way
     )
 
-    print(f"Train labels description:\n{labelStats(train_loader,args.num_class)}")
-    print(f"Test labels description:\n{labelStats(test_loader,args.num_class)}")
+    # print(f"Train labels description:\n{labelStats(train_loader,args.num_class)}")
+    # print(f"Test labels description:\n{labelStats(test_loader,args.num_class)}")
 
     if current_sess == 0:
         # First session
@@ -74,8 +74,6 @@ def main(
                     f"fixed_path_{current_sess -1}_{load_test_case}.npy",
                 )
             )
-
-            print(f"test_case is {test_case}, is it " + str(test_case == 0))
 
             # path = get_path(args.nLayers, args.M, args.N)
             if test_case == 0:
@@ -129,10 +127,10 @@ def main(
     print(f"Starting with session {current_sess}")
     print(f"test case : {test_case}")
     print("#" * 80)
-    print(f"path\n{path}")
-    print(f"fixed_path\n{fixed_path}")
-    print(f"train_path\n{train_path}")
-    print(f"infer_path\n{infer_path}")
+    # print(f"path\n{path}")
+    # print(f"fixed_path\n{fixed_path}")
+    # print(f"train_path\n{train_path}")
+    # print(f"infer_path\n{infer_path}")
 
     args.sess = current_sess
 
@@ -174,11 +172,11 @@ def main(
             )
         )
 
-    # # remove all files in current_paths
-    # if test_case == 0 and current_sess > 0 and current_sess % args.jump is args.jump - 1:
-    #     dir = args.checkpoint + "/current_paths"
-    #     for f in os.listdir(dir):
-    #         os.remove(os.path.join(dir, f))
+    # remove all files in current_paths
+    if test_case == 0 and current_sess > 0 and current_sess % args.jump is args.jump - 1:
+        dir = args.checkpoint + "/current_paths"
+        for f in os.listdir(dir):
+            os.remove(os.path.join(dir, f))
 
     print(f"done with session {current_sess}")
     print("#" * 80)
@@ -187,11 +185,9 @@ def main(
             break
         else:
             time.sleep(10)
-    print(f"test_case {current_sess}_{test_case} done")
 
     if args.with_mlflow:
         mlflow.end_run()
-    print(f"2-test_case {current_sess}_{test_case} done")
 
 
 if __name__ == "__main__":

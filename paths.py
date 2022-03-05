@@ -61,9 +61,6 @@ def generate_paths(
         equivalent = True
         while equivalent:
             equivalent = False
-            print("EQUIVALENT ?")
-            print(paths)
-            print(new_path)
             for path in paths:
                 if equivalent_path(path, new_path, fixed_path):
                     equivalent = True
