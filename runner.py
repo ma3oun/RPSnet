@@ -24,7 +24,7 @@ def main(
     if args.with_mlflow:
         import mlflow
 
-        mlflow.start_run()
+        mlflow.start_run("without_duplicate_paths")
 
     # Use CUDA
     use_cuda = torch.cuda.is_available()
@@ -77,7 +77,7 @@ def main(
 
             # path = get_path(args.nLayers, args.M, args.N)
             if test_case == 0:
-                print(f"Generating paths for _{current_sess}_{test_case}")
+                print(f"Generating paths for session {current_sess}")
                 generate_paths(
                     args.nLayers,
                     args.M,
@@ -92,8 +92,8 @@ def main(
             while path is None:
                 time.sleep(10)
                 path = load_path(test_case, args.checkpoint)
-                print(f"loading path_{current_sess}_{test_case}")
-            print("path loaded")
+                print(f"Loading path_{current_sess}_{test_case}")
+            print("Path loaded")
 
         else:
             if current_sess // args.jump == 0:
