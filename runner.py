@@ -3,19 +3,18 @@ RPS network training on CIFAR100
 Copyright (c) Jathushan Rajasegaran, 2019
 """
 
+import copy
 import os
-import time
 import random
-import torch
-
-from utils import mkdir_p
+import time
 
 import numpy as np
-import copy
+import torch
 
+from cl_datasets import Cl_dataset
 from learner import Learner
-from paths import get_best_model, load_path, generate_paths, is_all_done, get_path
-from cl_datasets import Cl_dataset, labelStats
+from paths import get_best_model, load_path, generate_paths, is_all_done
+from utils import mkdir_p
 
 
 def main(
@@ -24,7 +23,15 @@ def main(
     if args.with_mlflow:
         import mlflow
 
-        mlflow.start_run("without_duplicate_paths")
+        if current_sess == 0 and test_case == 0:
+            run = mlflow.start_run(run_name="without_duplicate_paths")
+            os.environ["MLFLOW_RUN_ID"] = run.info.run_id
+        else:
+            while True:
+                if "MLFLOW_RUN_ID" in os.environ:
+                    break
+                time.sleep(5)
+            mlflow.start_run(os.environ["MLFLOW_RUN_ID"])
 
     # Use CUDA
     use_cuda = torch.cuda.is_available()
@@ -90,7 +97,7 @@ def main(
 
             path = None
             while path is None:
-                time.sleep(10)
+                time.sleep(5)
                 path = load_path(test_case, args.checkpoint)
                 print(f"Loading path_{current_sess}_{test_case}")
             print("Path loaded")
@@ -173,7 +180,11 @@ def main(
         )
 
     # remove all files in current_paths
-    if test_case == 0 and current_sess > 0 and current_sess % args.jump is args.jump - 1:
+    if (
+        test_case == 0
+        and current_sess > 0
+        and current_sess % args.jump is args.jump - 1
+    ):
         dir = args.checkpoint + "/current_paths"
         for f in os.listdir(dir):
             os.remove(os.path.join(dir, f))
@@ -184,10 +195,7 @@ def main(
         if is_all_done(current_sess, args.epochs, args.checkpoint):
             break
         else:
-            time.sleep(10)
-
-    if args.with_mlflow:
-        mlflow.end_run()
+            time.sleep(5)
 
 
 if __name__ == "__main__":
