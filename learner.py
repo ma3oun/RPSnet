@@ -125,12 +125,12 @@ class Learner:
             )
 
             if self.args.with_mlflow:
-                mlflow.log_metric(f"learning rate_{self.args.sess}_{self.args.test_case}", self.state["lr"], epoch)
-                mlflow.log_metric(f"train_loss_{self.args.sess}_{self.args.test_case}", self.train_loss, epoch)
-                mlflow.log_metric(f"test_loss_{self.args.sess}_{self.args.test_case}", self.test_loss, epoch)
-                mlflow.log_metric(f"train_acc_{self.args.sess}_{self.args.test_case}", self.train_acc, epoch)
-                mlflow.log_metric(f"test_acc_{self.args.sess}_{self.args.test_case}", self.test_acc, epoch)
-                mlflow.log_metric(f"best_acc_{self.args.sess}_{self.args.test_case}", self.best_acc, epoch)
+                mlflow.log_metric(f"learning rate", self.state["lr"], epoch)
+                mlflow.log_metric(f"train_loss", self.train_loss, epoch)
+                mlflow.log_metric(f"test_loss", self.test_loss, epoch)
+                mlflow.log_metric(f"train_acc", self.train_acc, epoch)
+                mlflow.log_metric(f"test_acc", self.test_acc, epoch)
+                mlflow.log_metric(f"best_acc", self.best_acc, epoch)
 
             # save model
             is_best = self.test_acc > self.best_acc

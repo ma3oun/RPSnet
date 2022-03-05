@@ -346,7 +346,7 @@ def main():
         if is_all_done(ses, args.epochs, args.checkpoint):
             break
         else:
-            time.sleep(10)
+            time.sleep(5)
 
 
 if __name__ == "__main__":
