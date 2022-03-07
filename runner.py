@@ -13,7 +13,7 @@ import torch
 
 from cl_datasets import Cl_dataset
 from learner import Learner
-from paths import get_best_model, load_path, generate_paths, is_all_done
+from paths import get_best_model, load_path, generate_paths, is_all_done, get_path
 from utils import mkdir_p
 
 
@@ -38,7 +38,7 @@ def main(
     if args.with_mlflow:
         import mlflow
 
-        mlflow.start_run(run_name=f"without_duplicate_paths_{current_sess}_{test_case}")
+        mlflow.start_run(run_name=f"with_duplicate_paths_{current_sess}_{test_case}")
 
     # Use CUDA
     use_cuda = torch.cuda.is_available()
@@ -102,25 +102,25 @@ def main(
                 )
             )
 
-            # path = get_path(args.nLayers, args.M, args.N)
-            if test_case == 0:
-                print(f"Generating paths for session {current_sess}")
-                generate_paths(
-                    args.nLayers,
-                    args.M,
-                    args.N,
-                    fixed_path,
-                    args.checkpoint,
-                    args.max_test_case,
-                )
-                print("Paths generated")
-
-            path = None
-            while path is None:
-                time.sleep(10)
-                path = load_path(test_case, args.checkpoint)
-                print(f"Loading path_{current_sess}_{test_case}")
-            print("Path loaded")
+            path = get_path(args.nLayers, args.M, args.N)
+            # if test_case == 0:
+            #     print(f"Generating paths for session {current_sess}")
+            #     generate_paths(
+            #         args.nLayers,
+            #         args.M,
+            #         args.N,
+            #         fixed_path,
+            #         args.checkpoint,
+            #         args.max_test_case,
+            #     )
+            #     print("Paths generated")
+            #
+            # path = None
+            # while path is None:
+            #     time.sleep(10)
+            #     path = load_path(test_case, args.checkpoint)
+            #     print(f"Loading path_{current_sess}_{test_case}")
+            # print("Path loaded")
 
         else:
             if current_sess // args.jump == 0:
@@ -202,14 +202,14 @@ def main(
         )
 
     # remove all files in current_paths
-    if (
-        test_case == 0
-        and current_sess > 0
-        and current_sess % args.jump is args.jump - 1
-    ):
-        dir = args.checkpoint + "/current_paths"
-        for f in os.listdir(dir):
-            os.remove(os.path.join(dir, f))
+    # if (
+    #     test_case == 0
+    #     and current_sess > 0
+    #     and current_sess % args.jump is args.jump - 1
+    # ):
+    #     dir = args.checkpoint + "/current_paths"
+    #     for f in os.listdir(dir):
+    #         os.remove(os.path.join(dir, f))
 
     print(f"done with session {current_sess}")
     print("#" * 80)
