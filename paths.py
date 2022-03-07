@@ -51,7 +51,7 @@ def generate_paths(
     M: int,
     N: int,
     fixed_path: np.array,
-    checkpoint: str,
+    location: str,
     max_test_case: int = 8,
 ):
     paths = []
@@ -70,11 +70,11 @@ def generate_paths(
         paths.append(new_path)
 
     for test_case, path in enumerate(paths):
-        np.save(os.path.join(checkpoint, f"current_paths/path_{test_case}.npy"), path)
+        np.save(os.path.join(location, f"current_paths/path_{test_case}.npy"), path)
 
 
-def load_path(test_case: int, checkpoint):
-    file_path = os.path.join(checkpoint, f"current_paths/path_{test_case}.npy")
+def load_path(test_case: int, location: str):
+    file_path = os.path.join(location, f"current_paths/path_{test_case}.npy")
 
     if not os.path.isfile(file_path):
         return None

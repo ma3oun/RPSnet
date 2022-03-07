@@ -20,25 +20,10 @@ from utils import mkdir_p
 def main(
     args, model: torch.nn.Module, dataset: Cl_dataset, test_case: int, current_sess: int
 ):
-
-    if current_sess == 0 and test_case == 0:
-        from datetime import datetime
-
-        os.environ["RPS_NET_RUN_PATH"] = "runs/" + datetime.now().strftime(
-            "%d-%m-%Y_%H-%M-%S" + "/"
-        )
-    else:
-        while True:
-            time.sleep(10)
-            if "RPS_NET_RUN_PATH" in os.environ:
-                break
-
-    args.checkpoint = os.environ["RPS_NET_RUN_PATH"] + args.checkpoint
-
     if args.with_mlflow:
         import mlflow
 
-        mlflow.start_run(run_name=f"with_duplicate_paths_{current_sess}_{test_case}")
+        mlflow.start_run(run_name=f"{args.run_name}_{current_sess}_{test_case}")
 
     # Use CUDA
     use_cuda = torch.cuda.is_available()
@@ -48,21 +33,20 @@ def main(
     if use_cuda:
         torch.cuda.manual_seed_all(seed)
 
-    if not os.path.isdir(os.environ["RPS_NET_RUN_PATH"]):
-        mkdir_p(os.environ["RPS_NET_RUN_PATH"])
+    if not os.path.isdir(args.runs_location):
+        mkdir_p(args.runs_location)
 
-    if not os.path.isdir(args.checkpoint):
-        mkdir_p(args.checkpoint)
+    if not os.path.isdir(args.run_location):
+        mkdir_p(args.run_location)
 
-    if not os.path.isdir(args.checkpoint + "/current_paths"):
-        mkdir_p(args.checkpoint + "/current_paths")
+    if not os.path.isdir(args.results_location):
+        mkdir_p(args.results_location)
 
-    if not os.path.isdir(
-        os.environ["RPS_NET_RUN_PATH"] + f"models/{args.datasetName}/"
-    ):
-        mkdir_p(os.environ["RPS_NET_RUN_PATH"] + f"models/{args.datasetName}/")
+    if not os.path.isdir(args.models_location):
+        mkdir_p(args.models_location)
 
-    args.savepoint = os.environ["RPS_NET_RUN_PATH"] + f"models/{args.datasetName}/"
+    if not os.path.isdir(args.run_location + "/current_paths"):
+        mkdir_p(args.run_location + "/current_paths")
 
     args.test_case = test_case
 
@@ -83,12 +67,12 @@ def main(
         train_path = path.copy()
         infer_path = path.copy()
     else:
-        load_test_case = get_best_model(current_sess - 1, args.checkpoint)
+        load_test_case = get_best_model(current_sess - 1, args.results_location)
         if current_sess % args.jump == 0:
             # Get a new path
             fixed_path = np.load(
                 os.path.join(
-                    args.checkpoint,
+                    args.results_location,
                     f"fixed_path_{current_sess -1}_{load_test_case}.npy",
                 )
             )
@@ -101,7 +85,7 @@ def main(
             #         args.M,
             #         args.N,
             #         fixed_path,
-            #         args.checkpoint,
+            #         args.run_location,
             #         args.max_test_case,
             #     )
             #     print("Paths generated")
@@ -109,7 +93,7 @@ def main(
             # path = None
             # while path is None:
             #     time.sleep(10)
-            #     path = load_path(test_case, args.checkpoint)
+            #     path = load_path(test_case, args.run_location)
             #     print(f"Loading path_{current_sess}_{test_case}")
             # print("Path loaded")
 
@@ -120,27 +104,31 @@ def main(
             else:
                 # Get data from the last jump
                 lastJump = (current_sess // args.jump) * args.jump - 1
-                load_test_case_x = get_best_model(lastJump, args.checkpoint)
+                load_test_case_x = get_best_model(lastJump, args.results_location)
                 fixed_path = np.load(
                     os.path.join(
-                        args.checkpoint,
+                        args.results_location,
                         f"fixed_path_{lastJump}_{load_test_case_x}.npy",
                     )
                 )
             path = np.load(
                 os.path.join(
-                    args.checkpoint, f"path_{current_sess-1}_{load_test_case}.npy",
+                    args.results_location,
+                    f"path_{current_sess-1}_{load_test_case}.npy",
                 )
             )
         train_path = ~fixed_path & path
         infer_path = fixed_path | path
 
     np.save(
-        os.path.join(args.checkpoint, f"path_{current_sess}_{test_case}.npy",), path,
+        os.path.join(args.results_location, f"path_{current_sess}_{test_case}.npy",),
+        path,
     )
 
     np.save(
-        os.path.join(args.checkpoint, f"fixed_path_{current_sess}_{test_case}.npy",),
+        os.path.join(
+            args.results_location, f"fixed_path_{current_sess}_{test_case}.npy",
+        ),
         train_path,
     )
 
@@ -156,7 +144,7 @@ def main(
 
     if current_sess > 0:
         path_model = os.path.join(
-            args.savepoint,
+            args.models_location,
             f"session_{current_sess - 1}_{load_test_case}_model_best.pth.tar",
         )
         prev_best = torch.load(path_model)
@@ -180,7 +168,7 @@ def main(
     cfmat = main_learner.get_confusion_matrix(infer_path)
     np.save(
         os.path.join(
-            args.checkpoint, f"confusion_matrix_{current_sess}_{test_case}.npy",
+            args.results_location, f"confusion_matrix_{current_sess}_{test_case}.npy",
         ),
         cfmat,
     )
@@ -188,24 +176,25 @@ def main(
     if args.with_mlflow:
         mlflow.log_artifact(
             os.path.join(
-                args.checkpoint, f"confusion_matrix_{current_sess}_{test_case}.npy",
+                args.results_location,
+                f"confusion_matrix_{current_sess}_{test_case}.npy",
             )
         )
 
-    # remove all files in current_paths
+    # remove all files in current_paths #TODO move it to paths.py
     # if (
     #     test_case == 0
     #     and current_sess > 0
     #     and current_sess % args.jump is args.jump - 1
     # ):
-    #     dir = args.checkpoint + "/current_paths"
+    #     dir = args.run_location + "/current_paths"
     #     for f in os.listdir(dir):
     #         os.remove(os.path.join(dir, f))
 
     print(f"done with session {current_sess}")
     print("#" * 80)
     while True:
-        if is_all_done(current_sess, args.epochs, args.checkpoint):
+        if is_all_done(current_sess, args.epochs, args.results_location):
             break
         else:
             time.sleep(10)

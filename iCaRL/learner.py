@@ -184,7 +184,7 @@ class Learner:
 
         logger.close()
         logger.plot()
-        savefig(os.path.join(self.args.checkpoint, "log.eps"))
+        savefig(os.path.join(self.args.results_location, "log.eps"))
 
         print("Best acc:")
         print(self.best_acc)
