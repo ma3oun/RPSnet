@@ -1,0 +1,15 @@
+artifact_uri: file:///home/thomas.cloarec/RPSnet/mlruns/0/56f16e8badb949608344cc18d522456e/artifacts
+end_time: 1646521634767
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 56f16e8badb949608344cc18d522456e
+run_uuid: 56f16e8badb949608344cc18d522456e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1646519528899
+status: 3
+tags: []
+user_id: thomas.cloarec
