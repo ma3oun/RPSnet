@@ -25,7 +25,7 @@ def main(
         from datetime import datetime
 
         os.environ["RPS_NET_RUN_PATH"] = "runs/" + datetime.now().strftime(
-            "%d-%m-%Y_%H-%M-%S"
+            "%d-%m-%Y_%H-%M-%S" + "/"
         )
     else:
         while True:
@@ -58,20 +58,11 @@ def main(
         mkdir_p(args.checkpoint + "/current_paths")
 
     if not os.path.isdir(
-        os.environ["RPS_NET_RUN_PATH"]
-        + f"models/{args.datasetName}/"
-        + args.checkpoint.split("/")[-1]
+        os.environ["RPS_NET_RUN_PATH"] + f"models/{args.datasetName}/"
     ):
-        mkdir_p(
-            os.environ["RPS_NET_RUN_PATH"]
-            + f"models/{args.datasetName}/"
-            + args.checkpoint.split("/")[-1]
-        )
-    args.savepoint = (
-        os.environ["RPS_NET_RUN_PATH"]
-        + f"models/{args.datasetName}/"
-        + args.checkpoint.split("/")[-1]
-    )
+        mkdir_p(os.environ["RPS_NET_RUN_PATH"] + f"models/{args.datasetName}/")
+
+    args.savepoint = os.environ["RPS_NET_RUN_PATH"] + f"models/{args.datasetName}/"
 
     args.test_case = test_case
 
