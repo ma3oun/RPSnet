@@ -20,6 +20,19 @@ from utils import mkdir_p
 def main(
     args, model: torch.nn.Module, dataset: Cl_dataset, test_case: int, current_sess: int
 ):
+
+    if current_sess == 0 and test_case == 0:
+        from datetime import datetime
+
+        os.environ["RPS_NET_RUN_PATH"] = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+    else:
+        while True:
+            time.sleep(10)
+            if "RPS_NET_RUN_PATH" in os.environ:
+                break
+
+    args.checkpoint = os.environ["RPS_NET_RUN_PATH"] + args.checkpoint
+
     if args.with_mlflow:
         import mlflow
 
@@ -33,6 +46,9 @@ def main(
     if use_cuda:
         torch.cuda.manual_seed_all(seed)
 
+    if not os.path.isdir(os.environ["RPS_NET_RUN_PATH"]):
+        mkdir_p(os.environ["RPS_NET_RUN_PATH"])
+
     if not os.path.isdir(args.checkpoint):
         mkdir_p(args.checkpoint)
 
@@ -40,10 +56,20 @@ def main(
         mkdir_p(args.checkpoint + "/current_paths")
 
     if not os.path.isdir(
-        f"models/{args.datasetName}/" + args.checkpoint.split("/")[-1]
+        os.environ["RPS_NET_RUN_PATH"]
+        + f"models/{args.datasetName}/"
+        + args.checkpoint.split("/")[-1]
     ):
-        mkdir_p(f"models/{args.datasetName}/" + args.checkpoint.split("/")[-1])
-    args.savepoint = f"models/{args.datasetName}/" + args.checkpoint.split("/")[-1]
+        mkdir_p(
+            os.environ["RPS_NET_RUN_PATH"]
+            + f"models/{args.datasetName}/"
+            + args.checkpoint.split("/")[-1]
+        )
+    args.savepoint = (
+        os.environ["RPS_NET_RUN_PATH"]
+        + f"models/{args.datasetName}/"
+        + args.checkpoint.split("/")[-1]
+    )
 
     args.test_case = test_case
 
@@ -89,7 +115,7 @@ def main(
 
             path = None
             while path is None:
-                time.sleep(5)
+                time.sleep(10)
                 path = load_path(test_case, args.checkpoint)
                 print(f"Loading path_{current_sess}_{test_case}")
             print("Path loaded")
@@ -101,7 +127,9 @@ def main(
             else:
                 # Get data from the last jump
                 lastJump = (current_sess // args.jump) * args.jump - 1
-                load_test_case_x = get_best_model(lastJump, args.checkpoint)
+                load_test_case_x = get_best_model(
+                    lastJump, args.checkpoint
+                )
                 fixed_path = np.load(
                     os.path.join(
                         args.checkpoint,
@@ -110,16 +138,26 @@ def main(
                 )
             path = np.load(
                 os.path.join(
-                    args.checkpoint, f"path_{current_sess-1}_{load_test_case}.npy"
+                    args.checkpoint,
+                    f"path_{current_sess-1}_{load_test_case}.npy",
                 )
             )
         train_path = ~fixed_path & path
         infer_path = fixed_path | path
 
-    np.save(os.path.join(args.checkpoint, f"path_{current_sess}_{test_case}.npy"), path)
+    np.save(
+        os.path.join(
+            args.checkpoint,
+            f"path_{current_sess}_{test_case}.npy",
+        ),
+        path,
+    )
 
     np.save(
-        os.path.join(args.checkpoint, f"fixed_path_{current_sess}_{test_case}.npy"),
+        os.path.join(
+            args.checkpoint,
+            f"fixed_path_{current_sess}_{test_case}.npy",
+        ),
         train_path,
     )
 
@@ -159,7 +197,8 @@ def main(
     cfmat = main_learner.get_confusion_matrix(infer_path)
     np.save(
         os.path.join(
-            args.checkpoint, f"confusion_matrix_{current_sess}_{test_case}.npy"
+            args.checkpoint,
+            f"confusion_matrix_{current_sess}_{test_case}.npy",
         ),
         cfmat,
     )
@@ -167,7 +206,8 @@ def main(
     if args.with_mlflow:
         mlflow.log_artifact(
             os.path.join(
-                args.checkpoint, f"confusion_matrix_{current_sess}_{test_case}.npy"
+                args.checkpoint,
+                f"confusion_matrix_{current_sess}_{test_case}.npy",
             )
         )
 
@@ -187,7 +227,7 @@ def main(
         if is_all_done(current_sess, args.epochs, args.checkpoint):
             break
         else:
-            time.sleep(5)
+            time.sleep(10)
 
     if args.with_mlflow:
         mlflow.end_run()
