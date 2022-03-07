@@ -24,14 +24,16 @@ def main(
     if current_sess == 0 and test_case == 0:
         from datetime import datetime
 
-        os.environ["RPS_NET_RUN_PATH"] = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+        os.environ["RPS_NET_RUN_PATH"] = "runs/" + datetime.now().strftime(
+            "%d-%m-%Y_%H-%M-%S"
+        )
     else:
         while True:
             time.sleep(10)
             if "RPS_NET_RUN_PATH" in os.environ:
                 break
 
-    args.checkpoint = "runs" + os.environ["RPS_NET_RUN_PATH"] + args.checkpoint
+    args.checkpoint = os.environ["RPS_NET_RUN_PATH"] + args.checkpoint
 
     if args.with_mlflow:
         import mlflow
