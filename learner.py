@@ -68,21 +68,21 @@ class Learner:
             assert os.path.isfile(
                 self.args.resume
             ), "Error: no checkpoint directory found!"
-            self.args.checkpoint = os.path.dirname(self.args.resume)
+            self.args.results_location = os.path.dirname(self.args.resume)
             checkpoint = torch.load(self.args.resume)
             self.best_acc = checkpoint["best_acc"]
             self.start_epoch = checkpoint["epoch"]
             self.model.load_state_dict(checkpoint["state_dict"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
             logger = Logger(
-                os.path.join(self.args.checkpoint, "log.txt"),
+                os.path.join(self.args.results_location, "log.txt"),
                 title=self.title,
                 resume=True,
             )
         else:
             logger = Logger(
                 os.path.join(
-                    self.args.checkpoint,
+                    self.args.results_location,
                     f"session_{self.args.sess}_{self.args.test_case}_log.txt",
                 ),
                 title=self.title,
@@ -169,7 +169,7 @@ class Learner:
                     "optimizer": self.optimizer.state_dict(),
                 },
                 is_best,
-                checkpoint=self.args.savepoint,
+                checkpoint=self.args.models_location,
                 filename=f"session_{self.args.sess}_{self.args.test_case}_checkpoint.pth.tar",
                 session=self.args.sess,
                 test_case=self.args.test_case,
@@ -177,7 +177,7 @@ class Learner:
 
         logger.close()
         logger.plot()
-        savefig(os.path.join(self.args.checkpoint, "log.eps"))
+        savefig(os.path.join(self.args.results_location, "log.eps"))
 
         print("Best acc:")
         print(self.best_acc)

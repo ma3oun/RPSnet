@@ -51,7 +51,7 @@ def generate_paths(
     M: int,
     N: int,
     fixed_path: np.array,
-    checkpoint: str,
+    location: str,
     max_test_case: int = 8,
 ):
     paths = []
@@ -67,15 +67,14 @@ def generate_paths(
                     new_path = get_path(nLayers, M, N)
                     break
 
-            if not equivalent:
-                paths.append(new_path)
+        paths.append(new_path)
 
     for test_case, path in enumerate(paths):
-        np.save(os.path.join(checkpoint, f"current_paths/path_{test_case}.npy"), path)
+        np.save(os.path.join(location, f"current_paths/path_{test_case}.npy"), path)
 
 
-def load_path(test_case: int, checkpoint):
-    file_path = os.path.join(checkpoint, f"current_paths/path_{test_case}.npy")
+def load_path(test_case: int, location: str):
+    file_path = os.path.join(location, f"current_paths/path_{test_case}.npy")
 
     if not os.path.isfile(file_path):
         return None
@@ -98,7 +97,7 @@ def equivalent_path(path1: np.array, path2: np.array, fixed_path: np.array) -> b
 
     * never activated modules are all equivalent, modulo the initialization
     """
-    return fixed_path and path1 is path2
+    return np.array_equal(fixed_path & path1, fixed_path & path2)
 
 
 def get_path(nLayers: int, M: int, N: int) -> np.array:
