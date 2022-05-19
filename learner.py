@@ -6,6 +6,7 @@ import time
 import torch.nn as nn
 from tqdm import tqdm
 
+
 class Learner:
     def __init__(
         self,
@@ -109,7 +110,7 @@ class Learner:
                 f"\nEpoch: [{epoch + 1} | {self.args.epochs}] LR: {self.state['lr']} Sess: {self.args.sess}"
             )
             # with torch.autograd.set_detect_anomaly(True): # debug only
-            self.train(self.infer_path)
+            self.train(self.train_path)
             self.test(self.infer_path)
 
             # append logger file
@@ -125,12 +126,36 @@ class Learner:
             )
 
             if self.args.with_mlflow:
-                mlflow.log_metric(f"learning rate_{self.args.sess}_{self.args.test_case}", self.state["lr"], epoch)
-                mlflow.log_metric(f"train_loss_{self.args.sess}_{self.args.test_case}", self.train_loss, epoch)
-                mlflow.log_metric(f"test_loss_{self.args.sess}_{self.args.test_case}", self.test_loss, epoch)
-                mlflow.log_metric(f"train_acc_{self.args.sess}_{self.args.test_case}", self.train_acc, epoch)
-                mlflow.log_metric(f"test_acc_{self.args.sess}_{self.args.test_case}", self.test_acc, epoch)
-                mlflow.log_metric(f"best_acc_{self.args.sess}_{self.args.test_case}", self.best_acc, epoch)
+                mlflow.log_metric(
+                    f"learning rate_{self.args.sess}_{self.args.test_case}",
+                    self.state["lr"],
+                    epoch,
+                )
+                mlflow.log_metric(
+                    f"train_loss_{self.args.sess}_{self.args.test_case}",
+                    self.train_loss,
+                    epoch,
+                )
+                mlflow.log_metric(
+                    f"test_loss_{self.args.sess}_{self.args.test_case}",
+                    self.test_loss,
+                    epoch,
+                )
+                mlflow.log_metric(
+                    f"train_acc_{self.args.sess}_{self.args.test_case}",
+                    self.train_acc,
+                    epoch,
+                )
+                mlflow.log_metric(
+                    f"test_acc_{self.args.sess}_{self.args.test_case}",
+                    self.test_acc,
+                    epoch,
+                )
+                mlflow.log_metric(
+                    f"best_acc_{self.args.sess}_{self.args.test_case}",
+                    self.best_acc,
+                    epoch,
+                )
 
             # save model
             is_best = self.test_acc > self.best_acc
